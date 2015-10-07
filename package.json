@@ -1,0 +1,24 @@
+{
+  "name": "dev",
+  "main": "./lib/main",
+  "version": "0.0.0",
+  "description": "accelerate development of atom package",
+  "repository": "https://github.com/t9md/dev",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "consumedServices": {
+    "vim-mode": {
+      "versions": {
+        "^0.1.0": "consumeVimMode"
+      }
+    }
+  },
+  "dependencies": {
+    "atom-config-plus": "^0.1.1",
+    "atom-space-pen-views": "^2.0.5",
+    "coffee-script": "^1.10.0"
+  },
+  "devDependencies": {}
+}
