@@ -1,3 +1,3 @@
-# dev package
+# atom-dev
 
-Dont use this.  
+Collection of utilities commands I'm using for atom and package development.

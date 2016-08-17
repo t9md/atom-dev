@@ -3,7 +3,7 @@
   "main": "./lib/main",
   "version": "0.0.0",
   "description": "accelerate development of atom package",
-  "repository": "https://github.com/t9md/dev",
+  "repository": "https://github.com/t9md/atom-dev",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"

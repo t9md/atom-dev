@@ -1,8 +1,11 @@
-{CompositeDisposable} = require 'atom'
-settings = require './settings'
-{Range} = require 'atom'
+{Range, CompositeDisposable} = require 'atom'
 vm = require 'vm'
 coffee = require 'coffee-script'
+{inspect} = require 'util'
+settings = require './settings'
+# _ = require 'underscore-plus'
+
+{paneLayoutFor} = require './utils'
 
 module.exports =
   disposables: null
@@ -11,20 +14,23 @@ module.exports =
   lastPasted: {}
 
   activate: (state) ->
-    @patchClipboard()
     @disposables = new CompositeDisposable
     @disposables.add atom.commands.add 'atom-workspace',
-      'dev:logVimMode':                   => @logVimMode()
-      'dev:log':                          (event) => @log(event)
-      'dev:set-var-in-dev-tools':         => @setVarInDevTools()
-      'dev:toggle-track-cursor-moved':    => @toggleConfig('trackCursorMoved')
-      'dev:toggle-track-did-open':        => @toggleConfig('trackDidOpen')
+      'dev:logVimMode': => @logVimMode()
+      'dev:log': (event) => @log(event)
+      'dev:set-var-in-dev-tools': => @setVarInDevTools()
+      'dev:toggle-track-cursor-moved': => @toggleConfig('trackCursorMoved')
+      'dev:toggle-track-selection-change': => @toggleConfig('trackSelectionChanged')
+      'dev:toggle-track-did-open': => @toggleConfig('trackDidOpen')
       'dev:toggle-track-active-paneItem': => @toggleConfig('trackActivePaneItem')
-      'dev:dump':                         => @dump()
-      'dev:proj-folder-issue':            => @projFolderIssue()
-      'dev:flash-selection':              => @flashSelection()
-      'dev:flash-screen':                 =>
+      'dev:dump': => @dump()
+      'dev:throw-error': => @throwError()
+      'dev:flash-selection': => @flashSelection()
+      'dev:log-pane-layout': => @logPaneLayout()
+      'dev:flash-screen': =>
         @flashScreen atom.workspace.getActiveTextEditor(), 200
+      'dev:get-resut-marker-layer': =>
+        @getResultsMarkerLayerForTextEditor()
 
       'dev:log-scope-names': =>
         console.log @getGrammarScopeNames()
@@ -36,10 +42,33 @@ module.exports =
         @tokenProvider.destroy()
         @tokenProvider = null
 
+      'dev:hello': ->
+        console.log "dev:hello"
+
+      # 'dev:mark': ->
+      #   console.log "dev:mark"
+      #   editorElement = document.createElement "atom-text-editor"
+      #   editorElement.classList.add('editor')
+      #   editorElement.getModel().setMini(true)
+      #   editorElement.setAttribute('mini', '')
+      #   atom.workspace.addBottomPanel(item: editorElement, priority: 100)
+      #   editorElement.focus()
+
+      # 'dev:flash-screen': =>
+
     @disposables.add atom.workspace.observeTextEditors (editor) =>
+      # console.log "HELLO!!"
+      # editorElement = atom.views.getView(editor)
+      # editorElement.onDidAttach =>
+      #   console.log 'attached!'
+      # editorElement.component.updateSync()
+      # console.log 'visible row range', editor.getVisibleRowRange()
       @disposables.add editor.onDidChangeCursorPosition (event) =>
         if @isTracked('CursorMoved')
           @handleCursorMoved event
+      @disposables.add editor.onDidChangeSelectionRange ({oldBufferRange, newBufferRange}) =>
+        if @isTracked('SelectionChanged')
+          console.log "selection Changed! from #{oldBufferRange.toString()} to #{newBufferRange.toString()}"
 
     @disposables.add atom.workspace.observeActivePaneItem (item) =>
       if @isTracked('ActivePaneItem')
@@ -49,24 +78,30 @@ module.exports =
       if @isTracked('DidOpen')
         @handleDidOpen event
 
+  logPaneLayout: ->
+    root = atom.workspace.getActivePane().getContainer().getRoot()
+    # console.log inspect(getPaneLayout(root), depth: 10)
+    console.log inspect(paneLayoutFor(root), depth: 10)
+
+  throwError: ->
+    try
+      throw new Error('sample Error')
+    catch error
+      throw error
+
   setVarInDevTools: ->
     atom.openDevTools()
     console.clear()
     code = """
     e = atom.workspace.getActiveTextEditor()
+    el = atom.views.getView(e)
     c = e.getLastCursor()
     s = e.getLastSelection()
+    p = atom.workspace.getActivePane()
+    container = p.getContainer()
+    root = container.getRoot()
     """
     vm.runInThisContext coffee.compile(code, bare: true)
-
-  projFolderIssue: ->
-    folder = '/Users/tmaeda/github/atom'
-    atom.workspace.open(folder + '/README.md').done (editor) ->
-      editor.destroy()
-    atom.project.removePath folder
-    atom.project.addPath folder
-    atom.workspace.open(folder + '/README.md').done (editor) ->
-      editor.destroy()
 
   flashSelection: ->
     @editor = atom.workspace.getActiveTextEditor()
@@ -130,9 +165,23 @@ module.exports =
 
   deactivate: ->
     @disposables?.dispose()
-    @settings.dispose()
+    settings.dispose()
 
   consumeVimMode: (@vimModeService) ->
+
+
+  # "find-and-replace": {
+  #   "versions": {
+  #     "0.0.1": "consumeFindAndReplace"
+  #   }
+  # }
+  consumeFindAndReplace: (service) ->
+    console.log service
+    {@resultsMarkerLayerForTextEditor} = service
+
+  getResultsMarkerLayerForTextEditor: ->
+    editor = @getActiveTextEditor()
+    console.log @resultsMarkerLayerForTextEditor(editor)
 
   dump: ->
     console.log @clipboardHistory
@@ -144,7 +193,7 @@ module.exports =
     settings.toggle(param, log: true)
 
   handleCursorMoved: ({oldBufferPosition, newBufferPosition, cursor}) ->
-    console.log "CursorMoved: #{oldBufferPosition} > #{newBufferPosition} #{cursor.editor.getURI()}"
+    console.log "CursorMoved: #{oldBufferPosition} > #{newBufferPosition}"
 
   handleDidOpen: (event) ->
     {uri, item, pane, index} = event
@@ -178,6 +227,3 @@ module.exports =
   getVimEditorState: ->
     editor = @getActiveTextEditor()
     @vimModeService.getEditorState(editor)
-
-  go: ->
-    console.log 'go!'
