@@ -11,10 +11,31 @@ module.exports =
   disposables: null
   config: settings.config
   clipboardHistory: []
-  lastPasted: {}
+
+  registerPropagationTestCommands: ->
+    cnt = 0
+    propagate = (event) ->
+      console.log "===== propagation for #{event.type} #{cnt++}"
+      console.log 'this', this
+
+      # for own key, value of event
+      #   console.log "#{key} =>", value
+      # event.stopImmediatePropagation()
+      # event.stopPropagation()
+      console.log "-------------------"
+
+    command = {'dev:propagate': propagate}
+    scopes = [
+      'atom-text-editor.vim-mode-plus'
+      'atom-text-editor'
+      'atom-workspace'
+    ]
+    for scope in scopes
+      @disposables.add atom.commands.add scope, command
 
   activate: (state) ->
     @disposables = new CompositeDisposable
+    @registerPropagationTestCommands()
     @disposables.add atom.commands.add 'atom-workspace',
       'dev:logVimMode': => @logVimMode()
       'dev:log': (event) => @log(event)
@@ -55,6 +76,11 @@ module.exports =
       #   editorElement.focus()
 
       # 'dev:flash-screen': =>
+
+    @disposables.add atom.commands.onWillDispatch (event) ->
+      # console.log 'will-dispatch', event.stopPropagation()
+    @disposables.add atom.commands.onDidDispatch (event) ->
+      # console.log 'did-dispatch', event.stopPropagation()
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
       # console.log "HELLO!!"
