@@ -36,6 +36,12 @@ module.exports =
   activate: (state) ->
     @disposables = new CompositeDisposable
     @registerPropagationTestCommands()
+    @disposables.add atom.commands.add 'atom-text-editor', 'dev:test1', (event) ->
+      console.log event.target
+      console.log this
+      # console.log this.target
+      console.log @getModel()
+
     @disposables.add atom.commands.add 'atom-workspace',
       'dev:logVimMode': => @logVimMode()
       'dev:log': (event) => @log(event)
