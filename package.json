@@ -8,6 +8,15 @@
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
   },
+  "activationCommands": {
+    "atom-workspace": [
+      "dev:propagate",
+      "dev:log-vim-state-mode",
+      "dev:set-var-in-dev-tools",
+      "dev:throw-error",
+      "dev:log-pane-layout"
+    ]
+  },
   "consumedServices": {
     "vim-mode": {
       "versions": {
