@@ -8,8 +8,6 @@ module.exports =
   activate: ->
     @disposables = new CompositeDisposable
 
-    # for scope in ['atom-text-editor.vim-mode-plus', 'atom-text-editor', 'atom-workspace']
-    #   @disposables.add atom.commands.add(scope, 'dev:propagate', @propagate)
 
     @disposables.add atom.commands.add 'atom-workspace',
       'dev:log-vim-state-mode': => @logVimStateMode()
