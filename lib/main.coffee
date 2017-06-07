@@ -8,6 +8,7 @@ module.exports =
   activate: ->
     @disposables = new CompositeDisposable
 
+    # hoge
 
     @disposables.add atom.commands.add 'atom-workspace',
       'dev:log-vim-state-mode': => @logVimStateMode()
